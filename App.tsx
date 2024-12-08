@@ -5,9 +5,11 @@
  * @format
  */
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {
+  Animated,
+  Dimensions,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -24,6 +26,8 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+
+import BootSplash from 'react-native-bootsplash';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -56,11 +60,60 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 }
 
 function App(): React.JSX.Element {
+  const [opacity] = useState(() => new Animated.Value(1));
+  const [translateY] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    // setTimeout(async () => {
+    //   await BootSplash.hide({fade: true});
+    //   console.log('BootSplash has been hidden successfully');
+    // }, 4000);
+  }, []);
+
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
+
+  const {container, logo /*, brand */} = BootSplash.useHideAnimation({
+    manifest: require('./assets/bootsplash/manifest.json'),
+
+    logo: require('./assets/bootsplash/logo.png'),
+    // darkLogo: require("../assets/bootsplash/dark-logo.png"),
+    // brand: require("../assets/bootsplash/brand.png"),
+    // darkBrand: require("../assets/bootsplash/dark-brand.png"),
+
+    // statusBarTranslucent: true,
+    // navigationBarTranslucent: true,
+
+    animate: () => {
+      const {height} = Dimensions.get('window');
+
+      Animated.stagger(2500, [
+        Animated.spring(translateY, {
+          useNativeDriver: true,
+          delay: 1000,
+          toValue: 0,
+        }),
+        Animated.spring(translateY, {
+          useNativeDriver: true,
+          delay: 1000,
+          toValue: height,
+        }),
+      ]).start();
+
+      Animated.timing(opacity, {
+        useNativeDriver: true,
+        toValue: 0,
+        duration: 1000,
+        delay: 1000,
+      }).start(async () => {
+        // await BootSplash.hide();
+        // onAnimationEnd();
+      });
+    },
+  });
 
   return (
     <SafeAreaView style={backgroundStyle}>
@@ -91,6 +144,15 @@ function App(): React.JSX.Element {
           </Section>
           <LearnMoreLinks />
         </View>
+
+        <Animated.View {...container} style={[container.style, {opacity}]}>
+          <Animated.Image
+            {...logo}
+            style={[logo.style, {transform: [{translateY}]}]}
+          />
+
+          {/* <Animated.Image {...brand} style={[brand.style, { opacity }]} /> */}
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
